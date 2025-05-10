@@ -1,0 +1,9 @@
+Backend 
+
+proper order check 
+1.health check server 
+2.register user 
+3. email user to confirm email 
+4. set user to verified 
+5. login 
+6. 

@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import '../styles/animations.css';
+
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -9,7 +9,7 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [message, setMessage] = useState('');
-    const navigate = useNavigate();
+    const [messageType, setMessageType] = useState(''); // 'success' or 'error'
 
     const handleRegister = async (e) => {
 
@@ -31,17 +31,25 @@ const Register = () => {
             password: password,
             type: 'register'
         };
-        
+
         axios.post(`${apiUrl}/register`, requestBody, requestConfig).then(response => {
+
             console.log(response.data); // Handle successful login response here
-            axios.post(`${apiUrl}/email`, requestBody, requestConfig).then(response => {
-                console.log(response.data); // Handle successful login response here
-                setMessage('Registration successful. Please check your email for verification.');
-            }).catch((error) => {
-                setMessage(error.response.data.message);
-            });
+            setMessageType('success');
+            setMessage('Registration successful. Press back button to login.');
+
+
+            //email is not implemented yet, so this is commented out
+            // axios.post(`${apiUrl}/email`, requestBody, requestConfig).then(response => {
+            //     console.log(response.data); // Handle successful login response here
+            // setMessage('Registration successful. Please check your email for verification.');
+            // }).catch((error) => {
+            //     setMessage(error.response.data.message);
+            // });
         }).catch((error) => {
+            setMessageType('error');
             setMessage(error.response.data.message);
+            
         });
     }
     return (
@@ -60,7 +68,7 @@ const Register = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="border border-emerald-300 rounded-lg px-4 py-2 mt-4 transition-all duration-300 ease-in-out focus:outline-none focus:ring focus:ring-emerald-500"
-                        placeholder="Email"
+                        placeholder="Email(not real)"
                     />
                     <input
                         value={username}
@@ -83,9 +91,9 @@ const Register = () => {
                         placeholder="Confirm Password"
                     />
                     {message && (
-                        <p className="text-red-500 mt-2 text-sm">
+                    <p className={`mt-2 text-sm ${messageType === 'success' ? 'text-green-500' : 'text-red-500'}`}>
                         {message}
-                        </p>
+                    </p>
                     )}
                     <button
                         type="submit"

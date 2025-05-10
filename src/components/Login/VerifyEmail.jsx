@@ -22,6 +22,7 @@ const VerifyEmail = () => {
             type: 'verify'
         };
         
+
     })
     return(
         <div className="flex justify-center items-center h-screen bg-gray-900">
@@ -32,4 +33,8 @@ const VerifyEmail = () => {
     )
 }
 
-export default VerifyEmail;
+// export default VerifyEmail;
+
+//not implemented yet, and not used anywhere in the app yet. 
+//email componenet will not be implemented 
+//this file is only here for future reference.

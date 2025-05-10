@@ -1,7 +1,10 @@
 // src/components/HoldingsPanel.jsx
-import React from 'react';
+import React, {useState} from 'react';
+
 
 const HoldingsPanel = ({ hideValues }) => {
+
+  const user = JSON.parse(localStorage.getItem('user'));
   // Sample holdings data
   const holdings = [
     { name: 'AAPL', shares: 10, price: 178.72, value: 1787.20, change: 0.78 },
@@ -9,13 +12,21 @@ const HoldingsPanel = ({ hideValues }) => {
     { name: 'GOOGL', shares: 8, price: 142.56, value: 1140.48, change: -0.45 },
     { name: 'AMZN', shares: 12, price: 132.08, value: 1584.96, change: 0.32 },
     { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
+    { name: 'TSLA', shares: 15, price: 151.86, value: 2277.90, change: -1.67 },
   ];
 
   return (
     <div className="bg-gray-900 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-900/20">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Holdings</h2>
-        <button className="text-emerald-400 hover:text-emerald-300 transition-colors duration-300">View All</button>
+        {/* <button className="text-emerald-400 hover:text-emerald-300 transition-colors duration-300">View All</button> */}
       </div>
       <div className="space-y-3">
         {holdings.map((holding, index) => (

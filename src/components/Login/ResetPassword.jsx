@@ -76,4 +76,8 @@ const ResetPassword = () => {
     );
 }
 
-export default ResetPassword;
+// export default ResetPassword;
+
+//not implemented yet, and not used anywhere in the app yet. 
+//email componenet will not be implemented 
+//this file is only here for future reference.

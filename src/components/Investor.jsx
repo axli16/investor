@@ -1,9 +1,10 @@
 // src/components/Investor.jsx
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Menu, X, Eye, EyeOff } from 'lucide-react';
+import { DollarSign, Menu, X, Eye, EyeOff, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import TabButton from './TabButton';
-import DashboardContent from './DashboardContent';
+import DashboardContent from './DashBoard/DashboardContent';
+import TradeContent from './Trade/TradeContent';
 import '../styles/animations.css';
 
 const Investor = () => {
@@ -25,7 +26,7 @@ const Investor = () => {
       case 'dashboard':
         return <DashboardContent hideValues={hideValues} />;
       case 'trade':
-        return <div className="text-center py-16">Trade functionality would be implemented here</div>;
+        return <TradeContent/>;
       case 'buy':
         return <div className="text-center py-16">Buy functionality would be implemented here</div>;
       case 'settings':
@@ -99,6 +100,17 @@ const Investor = () => {
             />
             <hr className="border-gray-800" />
             <button
+              onClick={() => {
+                localStorage.removeItem('user');
+                localStorage.removeItem('accessToken');
+                window.location.href = '/';
+              }}
+              className="flex items-center space-x-2 w-full py-3 px-4 rounded-lg transition-colors duration-300 hover:bg-gray-800"
+            >
+              <LogOut size={20} />
+              <span>Log Out</span>
+            </button>
+            <button
               onClick={() => setHideValues(!hideValues)}
               className="flex items-center space-x-2 w-full py-3 px-4 rounded-lg transition-colors duration-300 hover:bg-gray-800"
             >
@@ -124,18 +136,29 @@ const Investor = () => {
               onClick={() => setCurrentPage('dashboard')}
             />
             <NavItem 
-              icon="PieChart" 
+              icon="TrendingUp" 
               label="Trade" 
               active={currentPage === 'trade'} 
               onClick={() => setCurrentPage('trade')}
             />
-            <NavItem 
+            {/* <NavItem 
               icon="TrendingUp" 
               label="Buy/Sell" 
               active={currentPage === 'buy'} 
               onClick={() => setCurrentPage('buy')}
-            />
+            /> */}
           </nav>
+          <button
+              onClick={() => {
+                localStorage.removeItem('user');
+                localStorage.removeItem('accessToken');
+                window.location.href = '/';
+              }}
+              className="flex items-center space-x-2 w-full py-3 px-4 rounded-lg transition-colors duration-300 hover:bg-gray-800"
+            >
+              <LogOut size={20} />
+              <span>Log Out</span>
+            </button>
           <div className="p-4 border-t border-gray-800">
             <button
               onClick={() => setHideValues(!hideValues)}
@@ -152,8 +175,7 @@ const Investor = () => {
           <div className="max-w-7xl mx-auto">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Welcome back {user.username}</h1>
-              <p className="text-gray-400">Here's your portfolio overview</p>
+              <h1 className="text-2xl font-bold">Welcome {user.username}</h1>
             </div>
 
             {/* Tab Navigation 
