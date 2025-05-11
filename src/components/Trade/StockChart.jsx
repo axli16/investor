@@ -1,7 +1,11 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { Chart as ChartJS, defaults} from "chart.js/auto"
+import {Line} from 'react-chartjs-2';
 import { Pencil, Move, RotateCcw, X } from 'lucide-react';
+
+defaults.maintainAspectRatio = false;
+defaults.responsive = true;
 
 const StockChart = () => {
   // State for chart data and interactions
@@ -14,8 +18,6 @@ const StockChart = () => {
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [visibleStartIndex, setVisibleStartIndex] = useState(0);
-  const [visibleEndIndex, setVisibleEndIndex] = useState(0);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
   const [drawings, setDrawings] = useState([]);
@@ -23,7 +25,10 @@ const StockChart = () => {
   const [svgPos, setSvgPos] = useState({x: 0, y: 0});
   const chartRef = useRef(null);
   const svgRef = useRef(null);
+  const priceRef = useRef(0); 
+ 
 
+  
   // Generate sample stock data
   useEffect(() => {
     const generateData = () => {
@@ -46,72 +51,74 @@ const StockChart = () => {
         time.setSeconds(startTime.getSeconds() + index);
         
         // Generate some realistic price movements
-        const change = (Math.random() - 0.48) * 0.5;
-        price = Math.max(price + change, 0.01);
+        const change = (Math.random() - 0.5) * 0.5;
+        price = price + change;
         
         stockData.push({
-          time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', seconds: '2-digits' }),
+          time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
           price: price.toFixed(2),
           timestamp: time.getTime(),
-          index: index,
         });
       }
+      priceRef.current = parseFloat(stockData[points - 1].price);
       
       
       
       for(let index = points; index < points + remainingPoints; index++){
         const time = new Date(startTime);
-        time.setSeconds(startTime.setSeconds() + index);
+        time.setSeconds(startTime.getSeconds() + index);
 
         stockData.push({
-          time: time.toLocaleTimeString([], {hour: '2-digit', minutes: '2-digit', seconds: '2-digits'}),
+          time: time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'}),
           price: null,
           timestamp: time.getTime(),
-          index: index,
         });
       }
 
       setData(stockData);
       
       // Set domain based on price range
-      const prices = stockData.map(d => parseFloat(d.price));
-      const min = Math.min(...prices) * 0.99;
-      const max = Math.max(...prices) * 1.01;
-      setYDomain({ min, max });
-      
-      // Set time domain
-      setXDomain({ min: 0, max: stockData.length - 1 });
-      setVisibleStartIndex(0);
-      setVisibleEndIndex(stockData.length - 1);
+      const prices = stockData
+        .filter(d => d.price !== null)
+        .map(d => parseFloat(d.price));
     };
-    
     generateData();
 
 
-    // const interval = setInterval(() => {
-    //   setData((prevData) => {
-
-    //     const time = new Date();
-    //     time.setSeconds(time.setSeconds() + index);
-
-    //     // Generate some realistic price movements
-    //     const change = (Math.random() - 0.48) * 0.5;
-    //     price = Math.max(price + change, 0.01);
-
-    //     const newPoint = {
-    //       time: time.toLocaleTimeString([], {hour: '2-digit', minutes:'2-digit', seconds: '2-digit'}), 
-    //       price: price.toFixed(2),
-    //       timestamp: time.getTime(),
-    //       index: index,
-    //     };
-    //     index++;
+    const interval = setInterval(() => {
+      setData((prevData) => {
+        const time = new Date();
+        const change = (Math.random() - 0.5) * 0.5;
+        let price = priceRef.current + change;
+        priceRef.current = price;
       
-    //     return [...prevData, newPoint]; 
-    //   });
-    // }, 1000); // Add data every 1 second
+        const newPoint = {
+          time: time.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+          price: price.toFixed(2),
+          timestamp: time.getTime(),
+        };
+      
+        // Find the index of the first padded (null) price
+        const firstNullIndex = prevData.findIndex(d => d.price === null);
+      
+        // Insert before padding
+        if (firstNullIndex !== -1) {
+          const before = prevData.slice(0, firstNullIndex);
+          const after = prevData.slice(firstNullIndex);
+          return [...before, newPoint, ...after];
+        } else {
+          // No padding left, just append
+          return [...prevData, newPoint];
+        }
+      });
+    }, 1000); // Add data every 1 second
 
 
-
+    return () => clearInterval(interval); // Clean up on unmount
   }, []);
 
 
@@ -169,15 +176,6 @@ const StockChart = () => {
       newMin = Math.max(0, newMin);
       newMax = Math.min(dataLength - 1, newMax);
       
-      // Update x domain
-      setXDomain({ min: newMin, max: newMax });
-      
-      // Update visible indices
-      setVisibleStartIndex(Math.floor(newMin));
-      setVisibleEndIndex(Math.ceil(newMax));
-      
-      // Update zoom level
-      setZoomLevel(newZoomLevel);
     }
   };
 
@@ -217,12 +215,6 @@ const StockChart = () => {
       let newMin = xDomain.min + xMove;
       let newMax = xDomain.max + xMove;
 
-      if(newMin > 0 && newMax < dataLength - 1){
-        setSvgPan(prev => ({
-          x: prev.x + dx,
-          y: prev.y + dy/2,
-        }));
-      }
       
       // Prevent panning beyond data bounds
       if (newMin < 0) {
@@ -286,15 +278,6 @@ const StockChart = () => {
     setVisibleEndIndex(data.length - 1);
   };
 
-  // Get visible data for the current view
-  const visibleData = React.useMemo(() => {
-    if (data.length === 0) return [];
-    // Make sure we include a few extra points for smooth rendering at edges
-    const buffer = 2;
-    const start = Math.max(0, Math.floor(xDomain.min) - buffer);
-    const end = Math.min(data.length - 1, Math.ceil(xDomain.max) + buffer );
-    return data.slice(start, end + 1);
-  }, [data, xDomain.min, xDomain.max]);
 
   // Adjust Y domain based on zoom and pan
   const adjustedYDomain = [
@@ -356,74 +339,20 @@ const StockChart = () => {
         onMouseLeave={handleMouseLeave}
         style={{ cursor: drawingMode ? 'crosshair' : isPanning ? 'grabbing' : 'grab' }}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={visibleData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
-            <XAxis 
-              dataKey="time" 
-              tick={{ fill: '#a0aec0' }} 
-              stroke="#4a5568"
-              interval={Math.max(1, Math.floor(visibleData.length / 8))}
-              domain={['dataMin', 'dataMax + 100']}
-              allowDataOverflow={true}
-            />
-            <YAxis 
-              domain={adjustedYDomain}
-              tick={{ fill: '#a0aec0' }} 
-              stroke="#4a5568"
-              tickFormatter={(value) => `${value}`}
-              allowDataOverflow={true}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke="#10b981" 
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 6, fill: '#10b981', stroke: '#fff' }}
-              isAnimationActive={false}
-            />
-            {/* Reference line for starting price */}
-            {data.length > 0 && (
-              <ReferenceLine 
-                y={data[0].price} 
-                stroke="#6366f1" 
-                strokeDasharray="3 3" 
-              />
-            )}
-          </LineChart>
-        </ResponsiveContainer>
-        
-        {/* Render drawings */}
-        <svg ref = {svgRef} className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          <g transform={`translate(${svgPos.x}, ${svgPos.y}) scale(${zoomLevel})`}> 
-          {drawings.map((points, index) => (
-            <polyline
-              key={index}
-              points={points.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke="#f59e0b"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ))}
-          {currentDrawing.length > 1 && (
-            <polyline
-              points={currentDrawing.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke="#f59e0b"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          )}
-          </g>
-        </svg>
+        <Line 
+        data={{
+          labels: data.map((data) => data.time),
+          datasets: [
+            {
+              label: "Price",
+              data: data.map((data) => data.price),
+              backgroundColor: "#374151",
+              borderColor: '#10B981',
+              pointRadius: 0
+            },
+          ],
+        }}
+        />
       </div>
       
       <div className="mt-4 text-gray-400 text-sm">
