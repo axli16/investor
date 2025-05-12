@@ -22,7 +22,7 @@ const DashboardContent = ({ hideValues }) => {
         }
     };
     axios.get(`${apiUrl}/balance?user=${user.username}`, requestConfig).then(response => {
-        setBalance(response.data.balance);
+        setBalance(response.data.balance.toFixed(2));
     }).catch((error) => {
         console.log("Balance not available.");
     });

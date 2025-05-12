@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Chart as ChartJS, defaults} from "chart.js/auto"
 import {Line} from 'react-chartjs-2';
 import { Pencil, Move, RotateCcw, X } from 'lucide-react';
+import axios from 'axios';
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;
@@ -26,7 +27,9 @@ const StockChart = () => {
   const chartRef = useRef(null);
   const svgRef = useRef(null);
   const priceRef = useRef(0); 
- 
+  const [buyIn, setBuyIn] = useState(0);
+  const [message, setMessage] = useState('');
+
 
   
   // Generate sample stock data
@@ -299,11 +302,49 @@ const StockChart = () => {
     return null;
   };
 
+
+  const Buy = () =>{
+    setBuyIn(priceRef.current);
+    console.log(`bought at ${priceRef.current}`)
+    setMessage(`bought at $${priceRef.current.toFixed(2)}`)
+  }
+
+  const Sell = () => {
+    if(buyIn === 0){
+      setMessage('Need to buy in before selling')
+      return;
+    }
+    console.log(`sold at ${priceRef.current}`);
+    const change = priceRef.current - buyIn;
+    setBuyIn(0);
+    const username = JSON.parse(localStorage.getItem('user'));
+    console.log(username)
+    const apiUrl = import.meta.env.VITE_USER_DB_LINK;
+    const requestConfig = {
+        headers: {
+            'x-api-key': import.meta.env.VITE_USER_DB_KEY
+        }
+    };
+    const requestBody = {
+        username: username.username,
+        netChange: change,
+    };
+
+    axios.post(`${apiUrl}/balance`, requestBody, requestConfig).then(response => {
+        setMessage(`Made $${change.toFixed(2)}`)
+        console.log(response.data); // Handle successful login response here
+    }).catch((error) => {
+        console.log('error')
+        setMessage('Something went wrong with updating your balance')
+    });
+
+  }
   // Render chart and controls
   return (
     <div className="h-1/2 w-full bg-gray-900 p-4 text-white rounded-md">
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold text-emerald-400">Stock Price</h2>
+        <h3>Current Price: ${priceRef.current.toFixed(2)}</h3>
         <div className="flex space-x-4">
           <button 
             className={`p-2 rounded-full ${drawingMode ? 'bg-emerald-600' : 'bg-gray-700'} hover:bg-emerald-500`}
@@ -332,12 +373,12 @@ const StockChart = () => {
       <div 
         ref={chartRef}
         className="h-96 w-full relative cursor-grab select-none"
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        style={{ cursor: drawingMode ? 'crosshair' : isPanning ? 'grabbing' : 'grab' }}
+        // onWheel={handleWheel}
+        // onMouseDown={handleMouseDown}
+        // onMouseMove={handleMouseMove}
+        // onMouseUp={handleMouseUp}
+        // onMouseLeave={handleMouseLeave}
+        // style={{ cursor: drawingMode ? 'crosshair' : isPanning ? 'grabbing' : 'grab' }}
       >
         <Line 
         data={{
@@ -363,8 +404,14 @@ const StockChart = () => {
             ' Click and drag to pan, use mouse wheel to zoom'
           }
         </p>
-        <p className="mt-1">Current mode: <span className="text-emerald-400">{drawingMode ? 'Drawing' : 'Navigation'}</span></p>
+        {/* <p className="mt-1">Current mode: <span className="text-emerald-400">{drawingMode ? 'Drawing' : 'Navigation'}</span></p> */}
+        <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Buy}>Buy in</button>
+        <button className='p-2 ml-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Sell}>Sell</button>
+        <div>
+          <p className='text-white '>{message}</p>
+        </div>
       </div>
+
     </div>
   );
 };
