@@ -5,6 +5,7 @@ import NavItem from './NavItem';
 import TabButton from './TabButton';
 import DashboardContent from './DashBoard/DashboardContent';
 import TradeContent from './Trade/TradeContent';
+import { resetActivities } from './ActivityFunctions';
 import '../styles/animations.css';
 
 const Investor = () => {
@@ -103,6 +104,7 @@ const Investor = () => {
               onClick={() => {
                 localStorage.removeItem('user');
                 localStorage.removeItem('accessToken');
+                resetActivities
                 window.location.href = '/';
               }}
               className="flex items-center space-x-2 w-full py-3 px-4 rounded-lg transition-colors duration-300 hover:bg-gray-800"

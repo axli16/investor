@@ -1,15 +1,15 @@
 // src/components/ActivityPanel.jsx
 import React from 'react';
+import { useState, useEffect } from 'react';
+import { getActivities } from '../ActivityFunctions';
 
 const ActivityPanel = ({ hideValues }) => {
   // Sample activity data
-  const recentActivity = [
-    { date: '2025-03-15', type: 'Buy', stock: 'AAPL', amount: 1787.20 },
-    { date: '2025-03-10', type: 'Sell', stock: 'NFLX', amount: 1200.00 },
-    { date: '2025-03-05', type: 'Dividend', stock: 'MSFT', amount: 45.60 },
-    { date: '2025-02-28', type: 'Deposit', stock: '', amount: 5000.00 }
-  ];
+  const [recentActivity,setRecentActivity] = useState([]);
 
+  useEffect(() => {
+      setRecentActivity(getActivities);
+  }, []);
   return (
     <div className="bg-gray-900 rounded-lg p-6 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-900/20">
       <div className="flex justify-between items-center mb-4">
@@ -40,8 +40,16 @@ const ActivityPanel = ({ hideValues }) => {
               <div className={hideValues ? "blur-sm" : ""}>
                 ${activity.amount.toLocaleString()}
               </div>
-              <div className="text-xs text-gray-400">
-                {activity.stock}
+              <div
+                className={`text-xs ${
+                  activity.change > 0
+                    ? 'text-green-500'  // Green if positive
+                    : activity.change < 0
+                    ? 'text-red-500'    // Red if negative
+                    : 'text-gray-400'   // Grey if zero
+                }`}
+              >
+                {`$${activity.change}`}
               </div>
             </div>
           </div>

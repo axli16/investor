@@ -4,6 +4,7 @@ import axios from 'axios';
 import DashboardCard from './DashboardCard';
 import HoldingsPanel from './HoldingsPanel';
 import ActivityPanel from './ActivityPanel';
+import { getChange, getPercentChange, setStarting } from '../ActivityFunctions';
 
 const DashboardContent = ({ hideValues }) => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
@@ -12,6 +13,7 @@ const DashboardContent = ({ hideValues }) => {
 
   useEffect(() => {
     getBalance(user);
+    setStarting(balance);
   })
 
   function getBalance(user){
@@ -37,8 +39,8 @@ const DashboardContent = ({ hideValues }) => {
         />
         <DashboardCard 
           title="Day Change" 
-          value={`$${(10 * 0.015).toLocaleString()}`} 
-          change={1.5} 
+          value={`$${getChange()}`} 
+          change={getPercentChange()} 
         />
         <DashboardCard 
           title="Total Gain" 

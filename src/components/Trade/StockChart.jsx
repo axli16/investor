@@ -4,6 +4,7 @@ import { Chart as ChartJS, defaults} from "chart.js/auto"
 import {Line} from 'react-chartjs-2';
 import { Pencil, Move, RotateCcw, X } from 'lucide-react';
 import axios from 'axios';
+import {addActivities} from '../ActivityFunctions'
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;
@@ -305,7 +306,8 @@ const StockChart = () => {
 
   const Buy = () =>{
     setBuyIn(priceRef.current);
-    console.log(`bought at ${priceRef.current}`)
+    const time = new Date();
+    addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0);
     setMessage(`bought at $${priceRef.current.toFixed(2)}`)
   }
 
@@ -333,8 +335,10 @@ const StockChart = () => {
     axios.post(`${apiUrl}/balance`, requestBody, requestConfig).then(response => {
         setMessage(`Made $${change.toFixed(2)}`)
         console.log(response.data); // Handle successful login response here
+        const time = new Date();
+        addActivities(time.toLocaleString(), 'Sell', priceRef.current.toFixed(2), change.toFixed(2))
     }).catch((error) => {
-        console.log('error')
+        console.log('error:', error)
         setMessage('Something went wrong with updating your balance')
     });
 
