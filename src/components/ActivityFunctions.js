@@ -27,9 +27,7 @@ export const resetActivities = () => {
 
 //broken for now 
 const recentChange = (changeAmount) => {
-    console.log(change + changeAmount);
-
-    change =eval(change + changeAmount);
+    change = Number(change) + Number(changeAmount);
     
 }
 

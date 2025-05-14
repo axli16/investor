@@ -33,16 +33,17 @@ const StockChart = () => {
   const [numStocks, setNumStock] = useState(1);
   const [multiplier,setMultiplier] = useState(1);
 
+
   
   // Generate sample stock data
   useEffect(() => {
     const generateData = () => {
-      const totalHours  = 0.5;
+      const totalHours  = 0.05;
       const remainingPoints = totalHours * 60 * 60;
-      const hours = 1; // Trading hours
+      const hours = 0.1; // Trading hours
       const points = hours * 60 * 60; // One point per second
       const startPrice = 150 + Math.random() * 50;
-      let price = startPrice
+      let price = startPrice;
 
       const stockData = [];
       const offset = hours * 60 * 60 * 1000;
@@ -61,7 +62,7 @@ const StockChart = () => {
         
         stockData.push({
           time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          price: price.toFixed(2),
+          price: price,
           timestamp: time.getTime(),
         });
       }
@@ -86,9 +87,10 @@ const StockChart = () => {
       const prices = stockData
         .filter(d => d.price !== null)
         .map(d => parseFloat(d.price));
-    };
-    generateData();
 
+      return points
+    };
+    let point = generateData();
 
     const interval = setInterval(() => {
       setData((prevData) => {
@@ -103,13 +105,14 @@ const StockChart = () => {
             minute: '2-digit',
             second: '2-digit',
           }),
-          price: price.toFixed(2),
+          price: price,
           timestamp: time.getTime(),
         };
       
         // Find the index of the first padded (null) price
         const firstNullIndex = prevData.findIndex(d => d.price === null);
-      
+        // console.log(point);
+        // point++;
         // Insert before padding
         if (firstNullIndex !== -1) {
           const before = prevData.slice(0, firstNullIndex);
@@ -304,7 +307,7 @@ const StockChart = () => {
     return null;
   };
 
-
+  //Doesn't remember when you switch between dahsboard and Trade view
   const Buy = () =>{
     if(buyIn !== 0){
       setMessage("You need to sell before buying again")
@@ -312,10 +315,10 @@ const StockChart = () => {
     }
     const bought = priceRef.current * numStocks;
     setBuyIn(bought);
-    
+    setMultiplier(numStocks)
     const time = new Date();
     
-    addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0, multiplier);
+    addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0, numStocks);
     setMessage(`bought at $${priceRef.current.toFixed(2)}`)
   }
 
@@ -355,16 +358,13 @@ const StockChart = () => {
 
   }
 
-  const addNumStock = () => {
-    setNumStock(numStocks + 1);
-  }
-  const subNumStock = () => {
-    if(numStocks === 1){
-      return;
-    }else{
-      setNumStock(numStocks - 1);
+  const handleMultiplierChange = (e) => {
+    e.preventDefault()
+    const value = e.target.value;
+
+    if(value === '' || /^\d+$/.test(value)){
+      setNumStock(Number(value))
     }
-    
   }
   // Render chart and controls
   return (
@@ -436,8 +436,12 @@ const StockChart = () => {
         <button className='p-2 ml-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Sell}>Sell</button>
         <div>
           <div className='p-3'>
-            <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={addNumStock}>+</button>
-            <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={subNumStock}>-</button>
+              <input className='p-2 mr-2 rounded-md bg-gray-700'
+                placeholder='number of stock'
+                value={numStocks}
+                onChange={handleMultiplierChange}
+
+              />
           </div>
           <p className='text-white '>{message}</p>
         </div>

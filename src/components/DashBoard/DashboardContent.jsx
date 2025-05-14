@@ -39,7 +39,7 @@ const DashboardContent = ({ hideValues }) => {
         />
         <DashboardCard 
           title="Day Change" 
-          value={`$${getChange()}`} 
+          value={`$${getChange().toFixed(2)}`} 
           change={getPercentChange()} 
         />
         <DashboardCard 
