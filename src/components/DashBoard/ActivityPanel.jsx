@@ -38,7 +38,7 @@ const ActivityPanel = ({ hideValues }) => {
             </div>
             <div className="text-right">
               <div className={hideValues ? "blur-sm" : ""}>
-                ${activity.amount.toLocaleString()}
+                ${activity.amount.toLocaleString()} ({activity.multiplier})
               </div>
               <div
                 className={`text-xs ${

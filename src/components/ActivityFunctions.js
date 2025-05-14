@@ -8,11 +8,11 @@ export const getActivities = () => {
     return recentActivities;
 }
 
-export const addActivities = (date, type, amount, curChange) => {
+export const addActivities = (date, type, amount, curChange, multiplier) => {
     if(recentActivities.length === 10){
         recentActivities.shift();
     }
-    const data = {date: date, type: type, amount: amount, change: curChange};
+    const data = {date: date, type: type, amount: amount, change: curChange, multiplier: multiplier};
 
     recentActivities.push(data);
     recentChange(curChange);

@@ -30,7 +30,8 @@ const StockChart = () => {
   const priceRef = useRef(0); 
   const [buyIn, setBuyIn] = useState(0);
   const [message, setMessage] = useState('');
-
+  const [numStocks, setNumStock] = useState(1);
+  const [multiplier,setMultiplier] = useState(1);
 
   
   // Generate sample stock data
@@ -305,9 +306,16 @@ const StockChart = () => {
 
 
   const Buy = () =>{
-    setBuyIn(priceRef.current);
+    if(buyIn !== 0){
+      setMessage("You need to sell before buying again")
+      return;
+    }
+    const bought = priceRef.current * numStocks;
+    setBuyIn(bought);
+    
     const time = new Date();
-    addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0);
+    
+    addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0, multiplier);
     setMessage(`bought at $${priceRef.current.toFixed(2)}`)
   }
 
@@ -317,10 +325,13 @@ const StockChart = () => {
       return;
     }
     console.log(`sold at ${priceRef.current}`);
-    const change = priceRef.current - buyIn;
+    console.log( multiplier)
+    const change = (priceRef.current * multiplier) - buyIn;
     setBuyIn(0);
+    
     const username = JSON.parse(localStorage.getItem('user'));
     console.log(username)
+    
     const apiUrl = import.meta.env.VITE_USER_DB_LINK;
     const requestConfig = {
         headers: {
@@ -336,12 +347,24 @@ const StockChart = () => {
         setMessage(`Made $${change.toFixed(2)}`)
         console.log(response.data); // Handle successful login response here
         const time = new Date();
-        addActivities(time.toLocaleString(), 'Sell', priceRef.current.toFixed(2), change.toFixed(2))
+        addActivities(time.toLocaleString(), 'Sell', priceRef.current.toFixed(2), change.toFixed(2), multiplier)
     }).catch((error) => {
         console.log('error:', error)
         setMessage('Something went wrong with updating your balance')
     });
 
+  }
+
+  const addNumStock = () => {
+    setNumStock(numStocks + 1);
+  }
+  const subNumStock = () => {
+    if(numStocks === 1){
+      return;
+    }else{
+      setNumStock(numStocks - 1);
+    }
+    
   }
   // Render chart and controls
   return (
@@ -409,9 +432,13 @@ const StockChart = () => {
           }
         </p>
         {/* <p className="mt-1">Current mode: <span className="text-emerald-400">{drawingMode ? 'Drawing' : 'Navigation'}</span></p> */}
-        <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Buy}>Buy in</button>
+        <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Buy}>Buy in {numStocks}</button>
         <button className='p-2 ml-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Sell}>Sell</button>
         <div>
+          <div className='p-3'>
+            <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={addNumStock}>+</button>
+            <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={subNumStock}>-</button>
+          </div>
           <p className='text-white '>{message}</p>
         </div>
       </div>
