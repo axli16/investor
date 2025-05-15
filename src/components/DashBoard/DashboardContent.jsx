@@ -40,7 +40,7 @@ const DashboardContent = ({ hideValues }) => {
         <DashboardCard 
           title="Day Change" 
           value={`$${getChange().toFixed(2)}`} 
-          change={getPercentChange()} 
+          change={`${getPercentChange().toFixed(2)}`} 
         />
         <DashboardCard 
           title="Total Gain" 
@@ -48,7 +48,7 @@ const DashboardContent = ({ hideValues }) => {
           change={portfolioGain} 
         />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="">
         {/* <HoldingsPanel hideValues={hideValues} /> */}
         <ActivityPanel hideValues={hideValues} />
       </div>

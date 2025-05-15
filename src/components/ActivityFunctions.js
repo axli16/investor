@@ -4,7 +4,6 @@ let perChange = 0;
 let starting = -1;
 
 export const getActivities = () => {
-    console.log('got activities')
     return recentActivities;
 }
 
@@ -32,11 +31,12 @@ const recentChange = (changeAmount) => {
 }
 
 const percentChange = () => {
-    perChange = change/ starting * 100;
+    perChange = Number(change)/ Number(starting) * 100;
+    console.log(perChange)
 }
 
 export const getPercentChange = () => {
-    return perChange.toFixed(0);
+    return perChange;
 }
 export const setChange = () => {
     change = 0;

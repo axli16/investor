@@ -129,183 +129,218 @@ const StockChart = () => {
     return () => clearInterval(interval); // Clean up on unmount
   }, []);
 
+  // Horizontal line plugin
+  const horizontalLinePlugin = {
+    id: "horizontalLine",
+    afterDatasetsDraw(chart, args, pluginOptions) {
+      const yValue = pluginOptions.y;
+      if (yValue === undefined) return;
 
-  const getSVGCoords = (e) => {
-    const svg = svgRef.current;
-    if (!svg) return { x: 0, y: 0 };
+      const {
+        ctx,
+        chartArea: { left, right },
+        scales: { y }
+      } = chart;
 
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
+      const yPixel = y.getPixelForValue(yValue);
 
-    const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
-
-    return { x: svgPoint.x, y: svgPoint.y };
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(left, yPixel);
+      ctx.lineTo(right, yPixel);
+      ctx.strokeStyle = pluginOptions.color || "red";
+      ctx.lineWidth = pluginOptions.lineWidth || 2;
+      ctx.stroke();
+      ctx.restore();
+    }
   };
 
+  ChartJS.register(horizontalLinePlugin);
+  
+  const drawLineAt = () => {
+    const chart = chartRef.current?.chart;
+    if (!chartRef.current) return;
+    console.log(typeof(priceRef.current))
+    chartRef.current.chart.options.plugins.horizontalLine.y = priceRef.current;
+    chartRef.current.update();
+  };
 
-  // Handle mouse events for zooming and panning
-  const handleWheel = (e) => {
-    e.preventDefault();
+  // const getSVGCoords = (e) => {
+  //   const svg = svgRef.current;
+  //   if (!svg) return { x: 0, y: 0 };
+
+  //   const pt = svg.createSVGPoint();
+  //   pt.x = e.clientX;
+  //   pt.y = e.clientY;
+
+  //   const svgPoint = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+  //   return { x: svgPoint.x, y: svgPoint.y };
+  // };
+
+
+  // // Handle mouse events for zooming and panning
+  // const handleWheel = (e) => {
+  //   e.preventDefault();
     
-    // Calculate zoom factor
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newZoomLevel = Math.min(Math.max(zoomLevel * zoomFactor, 1), 20);
+  //   // Calculate zoom factor
+  //   const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+  //   const newZoomLevel = Math.min(Math.max(zoomLevel * zoomFactor, 1), 20);
     
-    if (newZoomLevel !== zoomLevel) {
-      // Calculate mouse position relative to chart for zoom focus point
-      const rect = chartRef.current.getBoundingClientRect();
-      const mouseX = (e.clientX - rect.left) / rect.width;
+  //   if (newZoomLevel !== zoomLevel) {
+  //     // Calculate mouse position relative to chart for zoom focus point
+  //     const rect = chartRef.current.getBoundingClientRect();
+  //     const mouseX = (e.clientX - rect.left) / rect.width;
       
-      // Calculate current visible range
-      const currentRange = xDomain.max - xDomain.min;
-      const newRange = currentRange / zoomFactor;
+  //     // Calculate current visible range
+  //     const currentRange = xDomain.max - xDomain.min;
+  //     const newRange = currentRange / zoomFactor;
       
-      // Calculate new domain centered on mouse position
-      const dataLength = data.length;
-      const mousePosInDataIndex = xDomain.min + mouseX * currentRange;
+  //     // Calculate new domain centered on mouse position
+  //     const dataLength = data.length;
+  //     const mousePosInDataIndex = xDomain.min + mouseX * currentRange;
       
-      // Calculate new min/max keeping mouse position as focus point
-      let newMin = mousePosInDataIndex - (mouseX * newRange);
-      let newMax = mousePosInDataIndex + ((1 - mouseX) * newRange);
+  //     // Calculate new min/max keeping mouse position as focus point
+  //     let newMin = mousePosInDataIndex - (mouseX * newRange);
+  //     let newMax = mousePosInDataIndex + ((1 - mouseX) * newRange);
       
-      // Ensure boundaries
-      if (newMin < 0) {
-        newMax += (0 - newMin);
-        newMin = 0;
-      }
+  //     // Ensure boundaries
+  //     if (newMin < 0) {
+  //       newMax += (0 - newMin);
+  //       newMin = 0;
+  //     }
       
-      if (newMax > dataLength - 1) {
-        newMin -= (newMax - (dataLength - 1));
-        newMax = dataLength - 1;
-      }
+  //     if (newMax > dataLength - 1) {
+  //       newMin -= (newMax - (dataLength - 1));
+  //       newMax = dataLength - 1;
+  //     }
       
-      // Apply boundaries again in case both were out of range
-      newMin = Math.max(0, newMin);
-      newMax = Math.min(dataLength - 1, newMax);
+  //     // Apply boundaries again in case both were out of range
+  //     newMin = Math.max(0, newMin);
+  //     newMax = Math.min(dataLength - 1, newMax);
       
-    }
-  };
+  //   }
+  // };
 
-  const handleMouseDown = (e) => {
-    if (drawingMode) {
-      // Start drawing
-      const { x, y } = getSVGCoords(e);
-      setCurrentDrawing([{ x, y }]);
-      setIsDrawing(true);
-    } else {
-      // Start panning
-      setPanStart({ x: e.clientX, y: e.clientY });
-      setIsPanning(true);
-    }
-  };
+  // const handleMouseDown = (e) => {
+  //   if (drawingMode) {
+  //     // Start drawing
+  //     const { x, y } = getSVGCoords(e);
+  //     setCurrentDrawing([{ x, y }]);
+  //     setIsDrawing(true);
+  //   } else {
+  //     // Start panning
+  //     setPanStart({ x: e.clientX, y: e.clientY });
+  //     setIsPanning(true);
+  //   }
+  // };
 
-  const handleMouseMove = (e) => {
-    if (isPanning && !drawingMode) {
-      // Continue panning
-      const dx = e.clientX - panStart.x;
-      const dy = e.clientY - panStart.y;
+  // const handleMouseMove = (e) => {
+  //   if (isPanning && !drawingMode) {
+  //     // Continue panning
+  //     const dx = e.clientX - panStart.x;
+  //     const dy = e.clientY - panStart.y;
       
-      const rect = chartRef.current.getBoundingClientRect();
-      const deltaXRatio = dx / rect.width;
-      const deltaYRatio = dy / rect.height;
+  //     const rect = chartRef.current.getBoundingClientRect();
+  //     const deltaXRatio = dx / rect.width;
+  //     const deltaYRatio = dy / rect.height;
       
-      // Calculate current ranges
-      const xRange = xDomain.max - xDomain.min;
-      const yRange = yDomain.max - yDomain.min;
+  //     // Calculate current ranges
+  //     const xRange = xDomain.max - xDomain.min;
+  //     const yRange = yDomain.max - yDomain.min;
       
-      // Calculate movement in data units
-      const xMove = -deltaXRatio * xRange;
-      const yMove = deltaYRatio * yRange;
+  //     // Calculate movement in data units
+  //     const xMove = -deltaXRatio * xRange;
+  //     const yMove = deltaYRatio * yRange;
 
-      // Apply to x domain
-      const dataLength = data.length;
-      let newMin = xDomain.min + xMove;
-      let newMax = xDomain.max + xMove;
+  //     // Apply to x domain
+  //     const dataLength = data.length;
+  //     let newMin = xDomain.min + xMove;
+  //     let newMax = xDomain.max + xMove;
 
       
-      // Prevent panning beyond data bounds
-      if (newMin < 0) {
-        newMax += (0 - newMin);
-        newMin = 0;
-      }
+  //     // Prevent panning beyond data bounds
+  //     if (newMin < 0) {
+  //       newMax += (0 - newMin);
+  //       newMin = 0;
+  //     }
       
-      if (newMax > dataLength - 1) {
-        newMin -= (newMax - (dataLength - 1));
-        newMax = dataLength - 1;
-      }
+  //     if (newMax > dataLength - 1) {
+  //       newMin -= (newMax - (dataLength - 1));
+  //       newMax = dataLength - 1;
+  //     }
       
-      // Apply bounds again in case both were out of range
-      newMin = Math.max(0, newMin);
-      newMax = Math.min(dataLength - 1, newMax);
+  //     // Apply bounds again in case both were out of range
+  //     newMin = Math.max(0, newMin);
+  //     newMax = Math.min(dataLength - 1, newMax);
       
-      setXDomain({ min: newMin, max: newMax });
-      setVisibleStartIndex(Math.floor(newMin));
-      setVisibleEndIndex(Math.ceil(newMax));
+  //     setXDomain({ min: newMin, max: newMax });
+  //     setVisibleStartIndex(Math.floor(newMin));
+  //     setVisibleEndIndex(Math.ceil(newMax));
       
-      // Apply to y domain
-      setOffset({ x: offset.x, y: offset.y + yMove });
+  //     // Apply to y domain
+  //     setOffset({ x: offset.x, y: offset.y + yMove });
       
-      // Reset start point
-      setPanStart({ x: e.clientX, y: e.clientY });
-    } else if (isDrawing && drawingMode) {
-      // Continue drawing
-      const { x, y } = getSVGCoords(e);
-      setCurrentDrawing(prev => [...prev, { x, y }]);
-    }
-  };
+  //     // Reset start point
+  //     setPanStart({ x: e.clientX, y: e.clientY });
+  //   } else if (isDrawing && drawingMode) {
+  //     // Continue drawing
+  //     const { x, y } = getSVGCoords(e);
+  //     setCurrentDrawing(prev => [...prev, { x, y }]);
+  //   }
+  // };
 
-  const handleMouseUp = () => {
-    if (isDrawing) {
-      // Finish drawing
-      if (currentDrawing.length > 1) {
-        setDrawings(prev => [...prev, currentDrawing]);
-      }
-      setCurrentDrawing([]);
-      setIsDrawing(false);
-    }
-    setIsPanning(false);
-  };
+  // const handleMouseUp = () => {
+  //   if (isDrawing) {
+  //     // Finish drawing
+  //     if (currentDrawing.length > 1) {
+  //       setDrawings(prev => [...prev, currentDrawing]);
+  //     }
+  //     setCurrentDrawing([]);
+  //     setIsDrawing(false);
+  //   }
+  //   setIsPanning(false);
+  // };
 
-  const handleMouseLeave = handleMouseUp;
+  // const handleMouseLeave = handleMouseUp;
 
-  const toggleDrawingMode = () => {
-    setDrawingMode(!drawingMode);
-  };
+  // const toggleDrawingMode = () => {
+  //   setDrawingMode(!drawingMode);
+  // };
 
-  const clearDrawings = () => {
-    setDrawings([]);
-    setCurrentDrawing([]);
-  };
+  // const clearDrawings = () => {
+  //   setDrawings([]);
+  //   setCurrentDrawing([]);
+  // };
 
-  const resetView = () => {
-    setZoomLevel(1);
-    setOffset({ x: 0, y: 0 });
-    setXDomain({ min: 0, max: data.length - 1 });
-    setVisibleStartIndex(0);
-    setVisibleEndIndex(data.length - 1);
-  };
+  // const resetView = () => {
+  //   setZoomLevel(1);
+  //   setOffset({ x: 0, y: 0 });
+  //   setXDomain({ min: 0, max: data.length - 1 });
+  //   setVisibleStartIndex(0);
+  //   setVisibleEndIndex(data.length - 1);
+  // };
 
 
-  // Adjust Y domain based on zoom and pan
-  const adjustedYDomain = [
-    yDomain.min + (yDomain.max - yDomain.min) * (1 - zoomLevel) / 2 + offset.y,
-    yDomain.max - (yDomain.max - yDomain.min) * (1 - zoomLevel) / 2 + offset.y
-  ];
+  // // Adjust Y domain based on zoom and pan
+  // const adjustedYDomain = [
+  //   yDomain.min + (yDomain.max - yDomain.min) * (1 - zoomLevel) / 2 + offset.y,
+  //   yDomain.max - (yDomain.max - yDomain.min) * (1 - zoomLevel) / 2 + offset.y
+  // ];
 
-  // Custom tooltip styling
-  const CustomTooltip = ({ active, payload }) => {
+  // // Custom tooltip styling
+  // const CustomTooltip = ({ active, payload }) => {
 
-    if (active && payload && payload.length && !isDrawing && !drawingMode) {
-      return (
-        <div className="bg-gray-800 border border-emerald-500 p-2 rounded shadow-lg text-white">
-          <p className="text-emerald-400">{`Time: ${payload[0].payload.time}`}</p>
-          <p className="text-white">{`Price: $${payload[0].value}`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
+  //   if (active && payload && payload.length && !isDrawing && !drawingMode) {
+  //     return (
+  //       <div className="bg-gray-800 border border-emerald-500 p-2 rounded shadow-lg text-white">
+  //         <p className="text-emerald-400">{`Time: ${payload[0].payload.time}`}</p>
+  //         <p className="text-white">{`Price: $${payload[0].value}`}</p>
+  //       </div>
+  //     );
+  //   }
+  //   return null;
+  // };
 
   //Doesn't remember when you switch between dahsboard and Trade view
   const Buy = () =>{
@@ -316,6 +351,7 @@ const StockChart = () => {
     const bought = priceRef.current * numStocks;
     setBuyIn(bought);
     setMultiplier(numStocks)
+    drawLineAt(priceRef.current)
     const time = new Date();
     
     addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0, numStocks);
@@ -327,13 +363,13 @@ const StockChart = () => {
       setMessage('Need to buy in before selling')
       return;
     }
-    console.log(`sold at ${priceRef.current}`);
-    console.log( multiplier)
+    // console.log(`sold at ${priceRef.current}`);
+    // console.log( multiplier)
     const change = (priceRef.current * multiplier) - buyIn;
     setBuyIn(0);
     
     const username = JSON.parse(localStorage.getItem('user'));
-    console.log(username)
+    // console.log(username)
     
     const apiUrl = import.meta.env.VITE_USER_DB_LINK;
     const requestConfig = {
@@ -366,6 +402,9 @@ const StockChart = () => {
       setNumStock(Number(value))
     }
   }
+
+
+
   // Render chart and controls
   return (
     <div className="h-1/2 w-full bg-gray-900 p-4 text-white rounded-md">
@@ -373,7 +412,7 @@ const StockChart = () => {
         <h2 className="text-xl font-bold text-emerald-400">Stock Price</h2>
         <h3>Current Price: ${priceRef.current.toFixed(2)}</h3>
         <div className="flex space-x-4">
-          <button 
+          {/* <button 
             className={`p-2 rounded-full ${drawingMode ? 'bg-emerald-600' : 'bg-gray-700'} hover:bg-emerald-500`}
             onClick={toggleDrawingMode} 
             title="Toggle Drawing Mode"
@@ -393,7 +432,7 @@ const StockChart = () => {
             title="Reset View"
           >
             <RotateCcw size={20} />
-          </button>
+          </button> */}
         </div>
       </div>
       
@@ -419,6 +458,16 @@ const StockChart = () => {
               pointRadius: 0
             },
           ],
+        }}
+        options={{
+          responsive: true, 
+          plugins: {
+            horizontalLine: {
+              y: undefined, //default no line 
+              color: "blue",
+              lineWidth: 2
+            }
+          }
         }}
         />
       </div>
