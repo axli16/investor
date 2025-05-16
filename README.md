@@ -6,7 +6,8 @@ This is a website that lets you simulate trading in real time with a random stoc
 - Simulate stock movement 
 - Buy and sell to try and make your account as profitable as possible
 
-![App Screenshot](./assets/screenshot.png)
+![App Screenshot](./assets/screenshot.PNG)
+
 ## 🔧 Setup
 Clone the repo
 Then run as a react app
