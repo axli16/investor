@@ -5,6 +5,7 @@ import {Line} from 'react-chartjs-2';
 import { Pencil, Move, RotateCcw, X } from 'lucide-react';
 import axios from 'axios';
 import {addActivities} from '../ActivityFunctions'
+import ActivityPanel from '../DashBoard/ActivityPanel'
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;
@@ -30,6 +31,7 @@ const StockChart = () => {
   const priceRef = useRef(0); 
   const [buyIn, setBuyIn] = useState(0);
   const [message, setMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [numStocks, setNumStock] = useState(1);
   const [multiplier,setMultiplier] = useState(1);
 
@@ -345,22 +347,22 @@ const StockChart = () => {
   //Doesn't remember when you switch between dahsboard and Trade view
   const Buy = () =>{
     if(buyIn !== 0){
-      setMessage("You need to sell before buying again")
+      setErrorMsg("You need to sell before buying again")
       return;
     }
     const bought = priceRef.current * numStocks;
     setBuyIn(bought);
     setMultiplier(numStocks)
-    drawLineAt(priceRef.current)
+    // drawLineAt(priceRef.current)
     const time = new Date();
     
     addActivities(time.toLocaleString(), 'Buy', priceRef.current.toFixed(2), 0, numStocks);
-    setMessage(`bought at $${priceRef.current.toFixed(2)}`)
+    setMessage(`Bought at $${priceRef.current.toFixed(2)}`)
   }
 
   const Sell = () => {
     if(buyIn === 0){
-      setMessage('Need to buy in before selling')
+      setErrorMsg('Need to buy in before selling')
       return;
     }
     // console.log(`sold at ${priceRef.current}`);
@@ -389,7 +391,7 @@ const StockChart = () => {
         addActivities(time.toLocaleString(), 'Sell', priceRef.current.toFixed(2), change.toFixed(2), multiplier)
     }).catch((error) => {
         console.log('error:', error)
-        setMessage('Something went wrong with updating your balance')
+        setErrorMsg('Something went wrong with updating your balance')
     });
 
   }
@@ -409,8 +411,10 @@ const StockChart = () => {
   return (
     <div className="h-1/2 w-full bg-gray-900 p-4 text-white rounded-md">
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-emerald-400">Stock Price</h2>
-        <h3>Current Price: ${priceRef.current.toFixed(2)}</h3>
+        <h1 className="text-xl font-bold text-emerald-400">Stock Price</h1>
+        <h3 className="text-xl font-mono font-bold text-green-400 bg-black border-4 border-green-500 rounded-lg px-4 py-2 shadow-lg">
+          Current Price: ${priceRef.current.toFixed(2)}
+        </h3>
         <div className="flex space-x-4">
           {/* <button 
             className={`p-2 rounded-full ${drawingMode ? 'bg-emerald-600' : 'bg-gray-700'} hover:bg-emerald-500`}
@@ -481,19 +485,36 @@ const StockChart = () => {
           }
         </p>
         {/* <p className="mt-1">Current mode: <span className="text-emerald-400">{drawingMode ? 'Drawing' : 'Navigation'}</span></p> */}
-        <button className='p-2 mr-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Buy}>Buy in {numStocks}</button>
-        <button className='p-2 ml-2 rounded-md bg-gray-700 hover:bg-emerald-500' onClick={Sell}>Sell</button>
-        <div>
-          <div className='p-3'>
-              <input className='p-2 mr-2 rounded-md bg-gray-700'
-                placeholder='number of stock'
-                value={numStocks}
-                onChange={handleMultiplierChange}
-
-              />
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 p-4 bg-gray-900 rounded-xl shadow-lg max-w-md mx-auto">
+          <div className="flex items-center gap-2">
+            <input
+              className="p-2 w-32 rounded-md bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              placeholder="Number of stock"
+              value={numStocks}
+              onChange={handleMultiplierChange}
+            />
+            <button
+              className="px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition duration-200 shadow-sm"
+              onClick={Buy}
+            >
+              Buy × {numStocks}
+            </button>
+            <button
+              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition duration-200 shadow-sm"
+              onClick={Sell}
+            >
+              Sell
+            </button>
           </div>
-          <p className='text-white '>{message}</p>
+
+
         </div>
+        {message && (
+            <p className="text-sm text-gray-300 mt-2 text-center w-full">{message}</p>
+          )}
+        {errorMsg && (
+          <p className="text-sm text-red-300 mt-2 text-center w-full">{errorMsg}</p>
+        )}
       </div>
 
     </div>
