@@ -1,4 +1,4 @@
-const recentActivities = []
+let recentActivities = []
 let change = 0.0;
 let perChange = 0;
 let starting = -1;

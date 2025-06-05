@@ -31,21 +31,16 @@ const DashboardContent = ({ hideValues }) => {
   }
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DashboardCard 
           title="Total Value" 
           value={`$${balance}`} 
           change={balance} 
         />
         <DashboardCard 
-          title="Day Change" 
+          title="Session Change" 
           value={`$${getChange().toFixed(2)}`} 
           change={`${getPercentChange().toFixed(2)}`} 
-        />
-        <DashboardCard 
-          title="Total Gain" 
-          value={`$${(12 * portfolioGain / 100).toLocaleString()}`} 
-          change={portfolioGain} 
         />
       </div>
       <div className="">

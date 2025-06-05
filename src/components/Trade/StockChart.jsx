@@ -1,14 +1,17 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Chart as ChartJS, defaults} from "chart.js/auto"
+import { Chart as ChartJS, defaults, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend} from "chart.js/auto"
 import {Line} from 'react-chartjs-2';
-import { Pencil, Move, RotateCcw, X } from 'lucide-react';
+import { Pencil, Move, RotateCcw, X,  TrendingUp, TrendingDown, Shield, Target } from 'lucide-react';
 import axios from 'axios';
 import {addActivities} from '../ActivityFunctions'
 import ActivityPanel from '../DashBoard/ActivityPanel'
 
 defaults.maintainAspectRatio = false;
 defaults.responsive = true;
+
+// Register necessary Chart.js components
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const StockChart = () => {
   // State for chart data and interactions
@@ -34,7 +37,10 @@ const StockChart = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [numStocks, setNumStock] = useState(1);
   const [multiplier,setMultiplier] = useState(1);
-
+  const [stopLoss, setStopLoss] = useState(5);
+  const [takeProfit, setTakeProfit] = useState(10);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [startPrice, setStartPrice] = useState(150 + Math.random() * 50);
 
   
   // Generate sample stock data
@@ -44,7 +50,6 @@ const StockChart = () => {
       const remainingPoints = totalHours * 60 * 60;
       const hours = 0.1; // Trading hours
       const points = hours * 60 * 60; // One point per second
-      const startPrice = 150 + Math.random() * 50;
       let price = startPrice;
 
       const stockData = [];
@@ -131,41 +136,36 @@ const StockChart = () => {
     return () => clearInterval(interval); // Clean up on unmount
   }, []);
 
-  // Horizontal line plugin
-  const horizontalLinePlugin = {
-    id: "horizontalLine",
-    afterDatasetsDraw(chart, args, pluginOptions) {
-      const yValue = pluginOptions.y;
-      if (yValue === undefined) return;
-
-      const {
-        ctx,
-        chartArea: { left, right },
-        scales: { y }
-      } = chart;
-
-      const yPixel = y.getPixelForValue(yValue);
+  // Define the custom plugin for horizontal line
+  const horizontalLinesPlugin = {
+    id: 'horizontalLines',
+    afterDraw(chart) {
+      const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+      const lines = chart.options.plugins.horizontalLines?.lines || [];
 
       ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(left, yPixel);
-      ctx.lineTo(right, yPixel);
-      ctx.strokeStyle = pluginOptions.color || "red";
-      ctx.lineWidth = pluginOptions.lineWidth || 2;
-      ctx.stroke();
+      lines.forEach(({ yValue, color = 'red', lineWidth = 1 }) => {
+        if (yValue === undefined) return;
+        const yPixel = y.getPixelForValue(yValue);
+        ctx.beginPath();
+        ctx.moveTo(left, yPixel);
+        ctx.lineTo(right, yPixel);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      });
       ctx.restore();
     }
   };
 
-  ChartJS.register(horizontalLinePlugin);
+  ChartJS.register(horizontalLinesPlugin); // Register it once
   
-  const drawLineAt = () => {
-    const chart = chartRef.current?.chart;
-    if (!chartRef.current) return;
-    console.log(typeof(priceRef.current))
-    chartRef.current.chart.options.plugins.horizontalLine.y = priceRef.current;
-    chartRef.current.update();
-  };
+  const horizontalLineData = [
+  { yValue: priceRef.current, color: 'blue', lineWidth: 2 },
+  { yValue: startPrice, color: 'grey', lineWidth: 1 },
+  { yValue: 0, color: 'red', lineWidth: 2 }, // could be dynamic too  priceRef.current * (1 + (stopLoss / 100))
+  { yValue: 0, color: 'green', lineWidth: 2 }, // could be dynamic toopriceRef.current * (1 + (takeProfit / 100))
+];
 
   // const getSVGCoords = (e) => {
   //   const svg = svgRef.current;
@@ -350,6 +350,11 @@ const StockChart = () => {
       setErrorMsg("You need to sell before buying again")
       return;
     }
+    if (numStocks === 0){
+      setErrorMsg("Specify number of shares")
+      return
+    }
+    setStartPrice(priceRef.current);
     const bought = priceRef.current * numStocks;
     setBuyIn(bought);
     setMultiplier(numStocks)
@@ -406,6 +411,21 @@ const StockChart = () => {
   }
 
 
+
+
+  const handleStopLossChange = (e) => {
+    const value = e.target.value;
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setStopLoss(value);
+    }
+  };
+
+  const handleTakeProfitChange = (e) => {
+    const value = e.target.value;
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setTakeProfit(value);
+    }
+  };
 
   // Render chart and controls
   return (
@@ -464,48 +484,157 @@ const StockChart = () => {
           ],
         }}
         options={{
-          responsive: true, 
-          plugins: {
-            horizontalLine: {
-              y: undefined, //default no line 
-              color: "blue",
-              lineWidth: 2
+            responsive: true, 
+            plugins: {
+              horizontalLines: {
+                lines: horizontalLineData
+              }
             }
-          }
-        }}
+          }}
         />
       </div>
       
       <div className="mt-4 text-gray-400 text-sm">
-        <p>
+        {/* <p>
           <span className="text-emerald-400 font-semibold">Instructions:</span> 
           {drawingMode ? 
             ' Click and drag to draw on chart' : 
             ' Click and drag to pan, use mouse wheel to zoom'
           }
-        </p>
+        </p> */}
         {/* <p className="mt-1">Current mode: <span className="text-emerald-400">{drawingMode ? 'Drawing' : 'Navigation'}</span></p> */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 p-4 bg-gray-900 rounded-xl shadow-lg max-w-md mx-auto">
-          <div className="flex items-center gap-2">
+         <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 rounded-2xl shadow-2xl max-w-2xl mx-auto border border-gray-700">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-white mb-2">Trading Terminal</h2>
+        <div className="w-16 h-1 bg-gradient-to-r from-emerald-400 to-blue-400 mx-auto rounded-full"></div>
+      </div>
+
+      {/* Main Trading Controls */}
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-5 mb-4 border border-gray-600/50">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="relative">
             <input
-              className="p-2 w-32 rounded-md bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              placeholder="Number of stock"
+              className="p-3 w-36 rounded-lg bg-gray-700/80 text-white placeholder-gray-400 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all duration-200 text-center font-medium"
+              placeholder="Quantity"
               value={numStocks}
               onChange={handleMultiplierChange}
             />
+            <div className="absolute -top-2 left-3 px-2 bg-gray-800 text-xs text-gray-400 font-medium">
+              Shares
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
             <button
-              className="px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition duration-200 shadow-sm"
+              className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-emerald-500/25 font-semibold flex items-center gap-2 transform hover:scale-105"
               onClick={Buy}
             >
-              Buy × {numStocks}
+              <TrendingUp size={18} />
+              Buy × {numStocks || '0'}
             </button>
+            
             <button
-              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition duration-200 shadow-sm"
+              className="px-6 py-3 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25 font-semibold flex items-center gap-2 transform hover:scale-105"
               onClick={Sell}
             >
-              Sell
+              <TrendingDown size={18} />
+              Sell All
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Risk Management Section */}
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-600/50 overflow-hidden">
+        <div 
+          className="p-4 cursor-pointer hover:bg-gray-700/30 transition-colors duration-200 flex items-center justify-between"
+          onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+        >
+          <div className="flex items-center gap-2">
+            <Shield className="text-blue-400" size={20} />
+            <span className="text-white font-semibold">Risk Management</span>
+          </div>
+          <div className={`transform transition-transform duration-200 ${isAdvancedOpen ? 'rotate-180' : ''}`}>
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        <div className={`transition-all duration-300 ease-in-out ${isAdvancedOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+          <div className="p-5 pt-0 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Stop Loss */}
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="text-red-400" size={16} />
+                  <label className="text-sm font-medium text-gray-300">Stop Loss</label>
+                </div>
+                <div className="relative">
+                  <input
+                    className="p-3 w-full rounded-lg bg-gray-700/80 text-white placeholder-gray-400 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all duration-200 pr-8"
+                    placeholder="5.0"
+                    value={stopLoss}
+                    onChange={handleStopLossChange}
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">%</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Max loss before auto-sell</p>
+              </div>
+
+              {/* Take Profit */}
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="text-emerald-400" size={16} />
+                  <label className="text-sm font-medium text-gray-300">Take Profit</label>
+                </div>
+                <div className="relative">
+                  <input
+                    className="p-3 w-full rounded-lg bg-gray-700/80 text-white placeholder-gray-400 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all duration-200 pr-8"
+                    placeholder="10.0"
+                    value={takeProfit}
+                    onChange={handleTakeProfitChange}
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">%</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Target profit for auto-sell</p>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-600/30">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Risk/Reward Ratio:</span>
+                <span className="text-white font-medium">
+                  1:{stopLoss && takeProfit ? (parseFloat(takeProfit) / parseFloat(stopLoss || 1)).toFixed(2) : '0.00'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Status Indicator */}
+      <div className="mt-4 text-center">
+        <div
+          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border
+            ${buyIn === 0
+              ? "bg-emerald-500/20 border-emerald-500/30"
+              : "bg-red-500/20 border-red-500/30"}`}
+        >
+          <div
+            className={`w-2 h-2 rounded-full animate-pulse 
+              ${buyIn === 0 ? "bg-emerald-400" : "bg-red-400"}`}
+          ></div>
+          <span
+            className={`text-sm font-medium 
+              ${buyIn === 0? "text-emerald-400" : "text-red-400"}`}
+          >
+            {buyIn === 0 ? "Ready to Trade" : "Bought In"}
+          </span>
+        </div>
+      </div>
 
 
         </div>
