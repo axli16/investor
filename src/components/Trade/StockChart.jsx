@@ -32,7 +32,7 @@ const StockChart = () => {
   const chartRef = useRef(null);
   const svgRef = useRef(null);
   const priceRef = useRef(0); 
-  const [buyIn, setBuyIn] = useState(0);
+  const buyIn = useRef(0);
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [numStocks, setNumStock] = useState(1);
@@ -41,8 +41,8 @@ const StockChart = () => {
   const [takeProfit, setTakeProfit] = useState(10);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [startPrice, setStartPrice] = useState(150 + Math.random() * 50);
-  const [curStopLoss, setCurStopLoss] = useState(0);
-  const [curWinTake, setCurWinTake] = useState(0);
+  const curStopLoss = useRef(0)
+  const curTakeProfit = useRef(0)
 
   
   // Generate sample stock data
@@ -107,9 +107,9 @@ const StockChart = () => {
         let price = priceRef.current + change;
         priceRef.current = price;
 
-        if (buyIn === 0){
-          setCurStopLoss(priceRef.current - (priceRef.current * (stopLoss / 100)));
-          setCurWinTake(priceRef.current + (priceRef.current * (takeProfit / 100)));
+        if (buyIn.current === 0){
+          curStopLoss.current = (priceRef.current - (priceRef.current * (stopLoss / 100)));
+          curTakeProfit.current = (priceRef.current + (priceRef.current * (takeProfit / 100)));
         }
         
 
@@ -170,8 +170,8 @@ const StockChart = () => {
   const horizontalLineData = [
   { yValue: priceRef.current, color: 'blue', lineWidth: 2 },
   { yValue: startPrice, color: 'grey', lineWidth: 1 },
-  { yValue: curStopLoss, color: 'red', lineWidth: 2 }, // could be dynamic too  priceRef.current * (1 + (stopLoss / 100))
-  { yValue: curWinTake, color: 'green', lineWidth: 2 }, // could be dynamic toopriceRef.current * (1 + (takeProfit / 100))
+  { yValue: curStopLoss.current, color: 'red', lineWidth: 2 }, // could be dynamic too  priceRef.current * (1 + (stopLoss / 100))
+  { yValue: curTakeProfit.current, color: 'green', lineWidth: 2 }, // could be dynamic toopriceRef.current * (1 + (takeProfit / 100))
 ];
 
   // const getSVGCoords = (e) => {
@@ -353,7 +353,7 @@ const StockChart = () => {
 
   //Doesn't remember when you switch between dahsboard and Trade view
   const Buy = () =>{
-    if(buyIn !== 0){
+    if(buyIn.current !== 0){
       setErrorMsg("You need to sell before buying again")
       return;
     }
@@ -363,7 +363,7 @@ const StockChart = () => {
     }
     setStartPrice(priceRef.current);
     const bought = priceRef.current * numStocks;
-    setBuyIn(bought);
+    buyIn.current = bought
     setMultiplier(numStocks)
     // drawLineAt(priceRef.current)
     const time = new Date();
@@ -373,14 +373,14 @@ const StockChart = () => {
   }
 
   const Sell = () => {
-    if(buyIn === 0){
+    if(buyIn.current === 0){
       setErrorMsg('Need to buy in before selling')
       return;
     }
     // console.log(`sold at ${priceRef.current}`);
     // console.log( multiplier)
-    const change = (priceRef.current * multiplier) - buyIn;
-    setBuyIn(0);
+    const change = (priceRef.current * multiplier) - buyIn.current;
+    buyIn.current = 0;
     
     const username = JSON.parse(localStorage.getItem('user'));
     // console.log(username)
@@ -574,7 +574,7 @@ const StockChart = () => {
               <div className="relative">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="text-red-400" size={16} />
-                  <label className="text-sm font-medium text-gray-300">Stop Loss = ${(curStopLoss).toFixed(2)}</label>
+                  <label className="text-sm font-medium text-gray-300">Stop Loss = ${curStopLoss.current.toFixed(2)}</label>
                 </div>
                 <div className="relative">
                   <input
@@ -592,7 +592,7 @@ const StockChart = () => {
               <div className="relative">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="text-emerald-400" size={16} />
-                  <label className="text-sm font-medium text-gray-300">Take Profit = ${curWinTake.toFixed(2)}</label>
+                  <label className="text-sm font-medium text-gray-300">Take Profit = ${curTakeProfit.current.toFixed(2)}</label>
                 </div>
                 <div className="relative">
                   <input
@@ -624,19 +624,19 @@ const StockChart = () => {
       <div className="mt-4 text-center">
         <div
           className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border
-            ${buyIn === 0
+            ${buyIn.current === 0
               ? "bg-emerald-500/20 border-emerald-500/30"
               : "bg-red-500/20 border-red-500/30"}`}
         >
           <div
             className={`w-2 h-2 rounded-full animate-pulse 
-              ${buyIn === 0 ? "bg-emerald-400" : "bg-red-400"}`}
+              ${buyIn.current === 0 ? "bg-emerald-400" : "bg-red-400"}`}
           ></div>
           <span
             className={`text-sm font-medium 
-              ${buyIn === 0? "text-emerald-400" : "text-red-400"}`}
+              ${buyIn.current === 0? "text-emerald-400" : "text-red-400"}`}
           >
-            {buyIn === 0 ? "Ready to Trade" : "Bought In"}
+            {buyIn.current === 0 ? "Ready to Trade" : "Bought In"}
           </span>
         </div>
       </div>
