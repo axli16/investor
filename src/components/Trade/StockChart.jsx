@@ -41,6 +41,8 @@ const StockChart = () => {
   const [takeProfit, setTakeProfit] = useState(10);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [startPrice, setStartPrice] = useState(150 + Math.random() * 50);
+  const [curStopLoss, setCurStopLoss] = useState(0);
+  const [curWinTake, setCurWinTake] = useState(0);
 
   
   // Generate sample stock data
@@ -76,7 +78,6 @@ const StockChart = () => {
       priceRef.current = parseFloat(stockData[points - 1].price);
       
       
-      
       for(let index = points; index < points + remainingPoints; index++){
         const time = new Date(startTime);
         time.setSeconds(startTime.getSeconds() + index);
@@ -105,7 +106,13 @@ const StockChart = () => {
         const change = (Math.random() - 0.5) * 0.5;
         let price = priceRef.current + change;
         priceRef.current = price;
-      
+
+        if (buyIn === 0){
+          setCurStopLoss(priceRef.current - (priceRef.current * (stopLoss / 100)));
+          setCurWinTake(priceRef.current + (priceRef.current * (takeProfit / 100)));
+        }
+        
+
         const newPoint = {
           time: time.toLocaleTimeString([], {
             hour: '2-digit',
@@ -163,8 +170,8 @@ const StockChart = () => {
   const horizontalLineData = [
   { yValue: priceRef.current, color: 'blue', lineWidth: 2 },
   { yValue: startPrice, color: 'grey', lineWidth: 1 },
-  { yValue: 0, color: 'red', lineWidth: 2 }, // could be dynamic too  priceRef.current * (1 + (stopLoss / 100))
-  { yValue: 0, color: 'green', lineWidth: 2 }, // could be dynamic toopriceRef.current * (1 + (takeProfit / 100))
+  { yValue: curStopLoss, color: 'red', lineWidth: 2 }, // could be dynamic too  priceRef.current * (1 + (stopLoss / 100))
+  { yValue: curWinTake, color: 'green', lineWidth: 2 }, // could be dynamic toopriceRef.current * (1 + (takeProfit / 100))
 ];
 
   // const getSVGCoords = (e) => {
@@ -410,13 +417,11 @@ const StockChart = () => {
     }
   }
 
-
-
-
   const handleStopLossChange = (e) => {
     const value = e.target.value;
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setStopLoss(value);
+      console.log(stopLoss)
     }
   };
 
@@ -569,7 +574,7 @@ const StockChart = () => {
               <div className="relative">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="text-red-400" size={16} />
-                  <label className="text-sm font-medium text-gray-300">Stop Loss</label>
+                  <label className="text-sm font-medium text-gray-300">Stop Loss = ${(curStopLoss).toFixed(2)}</label>
                 </div>
                 <div className="relative">
                   <input
@@ -587,7 +592,7 @@ const StockChart = () => {
               <div className="relative">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="text-emerald-400" size={16} />
-                  <label className="text-sm font-medium text-gray-300">Take Profit</label>
+                  <label className="text-sm font-medium text-gray-300">Take Profit = ${curWinTake.toFixed(2)}</label>
                 </div>
                 <div className="relative">
                   <input
