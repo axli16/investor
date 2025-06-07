@@ -103,8 +103,8 @@ const StockChart = () => {
     const interval = setInterval(() => {
       setData((prevData) => {
         const time = new Date();
-        const change = (Math.random() - 0.5) * 0.5;
-        let price = priceRef.current - 0.5; //change
+        const change = (Math.random() - 0.5) * 0.6;
+        let price = priceRef.current + change; 
         priceRef.current = price;
 
         if (buyIn.current === 0){
@@ -425,7 +425,6 @@ const StockChart = () => {
     const value = e.target.value;
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setStopLoss(value);
-      console.log(stopLoss)
     }
   };
 
