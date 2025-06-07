@@ -104,7 +104,7 @@ const StockChart = () => {
       setData((prevData) => {
         const time = new Date();
         const change = (Math.random() - 0.5) * 0.5;
-        let price = priceRef.current + change;
+        let price = priceRef.current - 0.5; //change
         priceRef.current = price;
 
         if (buyIn.current === 0){
@@ -122,6 +122,10 @@ const StockChart = () => {
           price: price,
           timestamp: time.getTime(),
         };
+
+        if (buyIn.current !== 0 && (priceRef.current <= curStopLoss.current || priceRef.current >= curTakeProfit.current)){
+          Sell()
+        }
       
         // Find the index of the first padded (null) price
         const firstNullIndex = prevData.findIndex(d => d.price === null);
@@ -397,7 +401,7 @@ const StockChart = () => {
     };
 
     axios.post(`${apiUrl}/balance`, requestBody, requestConfig).then(response => {
-        setMessage(`Made $${change.toFixed(2)}`)
+        setMessage(`Sold for $${change.toFixed(2)}`)
         console.log(response.data); // Handle successful login response here
         const time = new Date();
         addActivities(time.toLocaleString(), 'Sell', priceRef.current.toFixed(2), change.toFixed(2), multiplier)
