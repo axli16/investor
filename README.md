@@ -1,6 +1,8 @@
 # Investor
 
  Link: [Investor](https://investor-owtlbk2cd-axli16s-projects.vercel.app/)
+
+ 
 This is a website that lets you simulate trading in real time with a random stock generator. Shows you kind of what the typical movement of a stock might be if you were to day trade. 
 
 ## 🚀 Features
