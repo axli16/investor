@@ -40,7 +40,7 @@ const StockChart = () => {
   const [stopLoss, setStopLoss] = useState(5);
   const [takeProfit, setTakeProfit] = useState(10);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [startPrice, setStartPrice] = useState(150 + Math.random() * 50);
+  const [startPrice, setStartPrice] = useState(70 + Math.random() * 50);
   const curStopLoss = useRef(0)
   const curTakeProfit = useRef(0)
 
@@ -103,7 +103,7 @@ const StockChart = () => {
     const interval = setInterval(() => {
       setData((prevData) => {
         const time = new Date();
-        const change = (Math.random() - 0.5) * 0.6;
+        const change = (Math.random() - 0.5) * 0.7;
         let price = priceRef.current + change; 
         priceRef.current = price;
 
